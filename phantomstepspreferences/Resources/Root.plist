@@ -1,29 +1,58 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>items</key>
-	<array>
-		<dict>
-			<key>cell</key>
-			<string>PSGroupCell</string>
-			<key>label</key>
-			<string>PhantomStepsPreferences First Page</string>
-		</dict>
-		<dict>
-			<key>cell</key>
-			<string>PSSwitchCell</string>
-			<key>default</key>
-			<true/>
-			<key>defaults</key>
-			<string>page.liam.phantomstepspreferences</string>
-			<key>key</key>
-			<string>AwesomeSwitch1</string>
-			<key>label</key>
-			<string>Awesome Switch 1</string>
-		</dict>
-	</array>
-	<key>title</key>
-	<string>PhantomStepsPreferences</string>
-</dict>
+  <dict>
+    <key>title</key><string>虚拟步数生成器 / Phantom Steps</string>
+    <key>items</key>
+    <array>
+      <dict>
+        <key>cell</key>
+        <string>PSGroupCell</string>
+        <key>label</key>
+        <string>一次性添加步数 / Generate Phantom Steps at Once</string>
+      </dict>
+      <dict>
+        <key>cell</key><string>PSEditTextCell</string>
+        <key>key</key><string>psp_once_input_steps</string>
+        <key>label</key><string>步数 / Steps</string>
+        <key>defaults</key><string>page.liam.phantomstepspreferences</string>
+        <key>keyboard</key><string>numbers</string>
+        <key>autoCaps</key><string>sentence</string>
+        <key>noAutoCorrect</key><true/>
+        <key>isNumeric</key><true/>
+      </dict>
+      <dict>
+        <key>cell</key><string>PSEditTextCell</string>
+        <key>key</key><string>psp_once_input_distance</string>
+        <key>label</key><string>距离（米） / Distance (m)</string>
+        <key>defaults</key><string>page.liam.phantomstepspreferences</string>
+        <key>keyboard</key><string>numbers</string>
+        <key>autoCaps</key><string>sentence</string>
+        <key>noAutoCorrect</key><true/>
+        <key>isNumeric</key><true/>
+      </dict>
+      <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>生成 / Generate</string>
+        <key>action</key><string>TODO</string>
+      </dict>
+
+      <dict>
+        <key>cell</key>
+        <string>PSGroupCell</string>
+        <key>label</key>
+        <string>找到我 / Find Me</string>
+      </dict>
+      <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>博客（中文） / Blog (Chinese)</string>
+        <key>action</key><string>openBlogZH</string>
+      </dict>
+      <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>博客（英文） / Blog (English)</string>
+        <key>action</key><string>openBlogEN</string>
+      </dict>
+    </array>
+  </dict>
 </plist>
