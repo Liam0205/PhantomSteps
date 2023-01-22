@@ -34,7 +34,7 @@
       <dict>
         <key>cell</key><string>PSButtonCell</string>
         <key>label</key><string>生成 / Generate</string>
-        <key>action</key><string>TODO</string>
+        <key>action</key><string>generateStepsATOnce</string>
       </dict>
 
       <dict>
