@@ -1,5 +1,11 @@
 #import "pspRootListController.h"
 #import <Foundation/Foundation.h>
+#import <HealthKit/HKDevice.h>
+#import <HealthKit/HKHealthStore.h>
+#import <HealthKit/HKObjectType.h>
+#import <HealthKit/HKQuantity.h>
+#import <HealthKit/HKQuantitySample.h>
+#import <HealthKit/HKUnit.h>
 
 #define PreferencesFilePath                                      \
   [NSString stringWithFormat:@"/var/mobile/Library/Preferences/" \
@@ -64,14 +70,15 @@ int fetch_int(NSString* key, int d) {
 // }
 
 // ----- actions
-- (void)generateStepsATOnce {
+- (void)checkSettings {
   load_prefs_to_dict();
 
   int steps = fetch_int(@"psp_once_input_steps", 1400);
-  int distance = fetch_int(@"psp_once_input_distance", 1000);
+  double distance = steps * 0.72;
 
   NSString* title;
   NSString* message;
+
   if ([error_msg rangeOfString:@"ERROR"].location != NSNotFound) {
     title = @"Failed with ERROR";
     message = error_msg;
@@ -80,7 +87,7 @@ int fetch_int(NSString* key, int d) {
     message = error_msg;
   } else {
     title = @"Success";
-    message = [NSString stringWithFormat:@"steps: %d, distance: %d", steps, distance];
+    message = [NSString stringWithFormat:@"steps: %d, distance: %.2lf", steps, distance];
   }
 
   UIAlertController* alert = [UIAlertController alertControllerWithTitle:title
@@ -89,7 +96,62 @@ int fetch_int(NSString* key, int d) {
 
   UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK"
                                                           style:UIAlertActionStyleDefault
-                                                        handler:^(UIAlertAction* action){
+                                                        handler:^(UIAlertAction* action) {
+                                                          return;
+                                                        }];
+
+  [alert addAction:defaultAction];
+  [self presentViewController:alert animated:YES completion:nil];
+}
+
+- (void)generateStepsATOnce {
+  load_prefs_to_dict();
+
+  if ([HKHealthStore isHealthDataAvailable]) {
+    int input_steps = fetch_int(@"psp_once_input_steps", 2800);
+    HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
+    HKQuantity* step_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"count"]
+                                                 doubleValue:input_steps];
+    HKQuantityType* dist_qtype =
+        [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDistanceWalkingRunning];
+    HKQuantity* dist_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"m"]
+                                                 doubleValue:input_steps * 0.72];
+    NSDate* time_begin = [NSDate dateWithTimeIntervalSinceNow:-3610];
+    NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
+    HKDevice* device = [HKDevice localDevice];
+    NSDictionary* metadata = @{};  // TODO(Liam): Fullfill metadata to do a better mock.
+    HKQuantitySample* step_sample = [HKQuantitySample quantitySampleWithType:step_qtype
+                                                                    quantity:step_quantity
+                                                                   startDate:time_begin
+                                                                     endDate:time_end
+                                                                      device:device
+                                                                    metadata:metadata];
+    HKQuantitySample* dist_sample = [HKQuantitySample quantitySampleWithType:dist_qtype
+                                                                    quantity:dist_quantity
+                                                                   startDate:time_begin
+                                                                     endDate:time_end
+                                                                      device:device
+                                                                    metadata:metadata];
+
+    HKHealthStore* store = [[HKHealthStore alloc] init];
+    [store saveObjects:@[ step_sample, dist_sample ]
+        withCompletion:^(BOOL success, NSError* error) {
+          // TODO(Liam): write this callback.
+          return;
+        }];
+  }
+  UIAlertController* alert = [UIAlertController
+      alertControllerWithTitle:@"Phantom Steps"
+                       message:[NSString stringWithFormat:
+                                             @"执行完成，请打开「健康.app」检查是否成功写入。/ "
+                                             @"The execution is complete, please open the \"Health.app\" to "
+                                             @"check whether the writing is successful."]
+                preferredStyle:UIAlertControllerStyleAlert];
+
+  UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK"
+                                                          style:UIAlertActionStyleDefault
+                                                        handler:^(UIAlertAction* action) {
+                                                          return;
                                                         }];
 
   [alert addAction:defaultAction];

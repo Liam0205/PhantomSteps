@@ -8,7 +8,7 @@
       <dict>
         <key>cell</key><string>PSGroupCell</string>
         <key>label</key><string>一次性添加步数 / Generate Phantom Steps at Once</string>
-        <key>footerText</key><string>通常，1,400 步大约行走 1,000 米。上下拖拽以关闭键盘。 / Generally, 1,400 steps cover approximately 1,000 meters. Scroll to dismiss keyboard.</string>
+        <key>footerText</key><string>通常，1,000 步大约行走 720 米。设置后可能需要过一段时间才会生效，请善用「检查数据」来检验是否生效。上下拖拽以关闭键盘。 / Typically, 1,000 steps cover approximately 720 meters. It may take a while to take effect after setting, please make good use of "Check Data" to check whether it takes effect. Drag up or down to close the keyboard.</string>
       </dict>
       <dict>
         <key>cell</key><string>PSEditTextCell</string>
@@ -22,15 +22,9 @@
         <key>PostNotification</key><string>page.liam.phantomstepspreferences/preferences.changed</string>
       </dict>
       <dict>
-        <key>cell</key><string>PSEditTextCell</string>
-        <key>key</key><string>psp_once_input_distance</string>
-        <key>label</key><string>距离（米） / Distance (m)</string>
-        <key>defaults</key><string>page.liam.phantomstepspreferences</string>
-        <key>keyboard</key><string>numbers</string>
-        <key>autoCaps</key><string>sentence</string>
-        <key>noAutoCorrect</key><true/>
-        <key>isNumeric</key><true/>
-        <key>PostNotification</key><string>page.liam.phantomstepspreferences/preferences.changed</string>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>检查数据 / Check Data</string>
+        <key>action</key><string>checkSettings</string>
       </dict>
       <dict>
         <key>cell</key><string>PSButtonCell</string>
