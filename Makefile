@@ -1,4 +1,5 @@
-TARGET := iphone:clang:latest:7.0
+
+TARGET := iphone:clang:latest:14.0
 INSTALL_TARGET_PROCESSES = com.apple.Health
 
 
@@ -10,3 +11,6 @@ PhantomSteps_FILES = Tweak.x
 PhantomSteps_CFLAGS = -fobjc-arc
 
 include $(THEOS_MAKE_PATH)/tweak.mk
+
+SUBPROJECTS += phantomstepspreferences
+include $(THEOS_MAKE_PATH)/aggregate.mk
