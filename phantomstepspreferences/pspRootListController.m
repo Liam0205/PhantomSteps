@@ -19,25 +19,24 @@
 }
 
 // - dismiss on tab outside text field
-- (void)viewDidLoad {
-  [super viewDidLoad];
+// - (void)viewDidLoad {
+//   [super viewDidLoad];
 
-  UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
+//   UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(dismissKeyboard)];
 
-  [self.view addGestureRecognizer:tap];
-}
+//   [self.view addGestureRecognizer:tap];
+// }
 
--(void)dismissKeyboard {
-  [self.view endEditing:YES];
-}
+// -(void)dismissKeyboard {
+//   [self.view endEditing:YES];
+// }
 
 // - dismiss on press return key
--(void)_returnKeyPressed:(id)arg1 {
-  [self.view endEditing:YES];
-}
+// -(void)_returnKeyPressed:(id)arg1 {
+//   [self.view endEditing:YES];
+// }
 
-// ---
-
+// ----- actions
 - (void)generateStepsATOnce {
   UIAlertController* alert = [UIAlertController alertControllerWithTitle:@"成功 / Success"
                                 message:@"假的啦！还没实现功能呢！"
