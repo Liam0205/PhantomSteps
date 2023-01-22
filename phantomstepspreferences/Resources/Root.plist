@@ -19,6 +19,7 @@
         <key>autoCaps</key><string>sentence</string>
         <key>noAutoCorrect</key><true/>
         <key>isNumeric</key><true/>
+        <key>PostNotification</key><string>page.liam.phantomstepspreferences/preferences.changed</string>
       </dict>
       <dict>
         <key>cell</key><string>PSEditTextCell</string>
@@ -29,6 +30,7 @@
         <key>autoCaps</key><string>sentence</string>
         <key>noAutoCorrect</key><true/>
         <key>isNumeric</key><true/>
+        <key>PostNotification</key><string>page.liam.phantomstepspreferences/preferences.changed</string>
       </dict>
       <dict>
         <key>cell</key><string>PSButtonCell</string>
