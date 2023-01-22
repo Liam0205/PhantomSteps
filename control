@@ -1,6 +1,6 @@
 Package: page.liam.phantomsteps
 Name: PhantomSteps
-Version: 0.0.1
+Version: 0.1.0
 Architecture: iphoneos-arm
 Description: Generate steps by your need!
 Maintainer: Liam Huang
