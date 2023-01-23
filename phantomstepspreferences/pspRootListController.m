@@ -34,6 +34,34 @@ int fetch_int(NSString* key, int d) {
   }
 }
 
+NSDate* maxDate(NSDate* lhs, NSDate* rhs) {
+  if (!lhs) {
+    return rhs;
+  } else if (!rhs) {
+    return lhs;
+  } else {
+    if ([lhs compare:rhs] == NSOrderedDescending) {
+      return lhs;
+    } else {
+      return rhs;
+    }
+  }
+}
+
+NSDate* minDate(NSDate* lhs, NSDate* rhs) {
+  if (!lhs) {
+    return rhs;
+  } else if (!rhs) {
+    return lhs;
+  } else {
+    if ([lhs compare:rhs] == NSOrderedAscending) {
+      return lhs;
+    } else {
+      return rhs;
+    }
+  }
+}
+
 @implementation pspRootListController
 
 - (NSArray*)specifiers {
@@ -113,8 +141,13 @@ int fetch_int(NSString* key, int d) {
                                                doubleValue:input_steps * 0.72];
 
   // sample time
-  NSDate* time_begin = [NSDate dateWithTimeIntervalSinceNow:-3610];
   NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
+  NSDate* hour_before_time_end = [time_end dateByAddingTimeInterval:-3610];
+  NSDate* step_edate = [self fetchLatestSampleEndDate:step_qtype];
+  NSDate* dist_edate = [self fetchLatestSampleEndDate:dist_qtype];
+  NSDate* time_begin = minDate(time_end, maxDate(hour_before_time_end, maxDate(step_edate, dist_edate)));
+  NSLog(@"time_end: %@, hour_before_time_end:%@, step_edate: %@, dist_edate: %@, time_begin: %@", time_end,
+        hour_before_time_end, step_edate, dist_edate, time_begin);
 
   // sample device
   HKDevice* device = [HKDevice localDevice];
@@ -248,6 +281,7 @@ int fetch_int(NSString* key, int d) {
   NSDate* dist_edate = [self fetchLatestSampleEndDate:dist_qtype];
   NSLog(@"OUTSIDE RESULT_HANDLER, step: %@", step_edate);
   NSLog(@"OUTSIDE RESULT_HANDLER, dist: %@", dist_edate);
-  NSLog(@"OUTSIDE RESULT_HANDLER, max: %@", MAX(step_edate, dist_edate));
+  NSDate* nildate = nil;
+  NSLog(@"OUTSIDE RESULT_HANDLER, max: %@", maxDate(step_edate, nildate));
 }
 @end
