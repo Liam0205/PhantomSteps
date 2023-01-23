@@ -145,10 +145,12 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
 
   // sample time
   NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
-  NSDate* hour_before_time_end = [time_end dateByAddingTimeInterval:-3610];
+  NSDate* hour_before_time_end = [time_end dateByAddingTimeInterval:-3600];
   NSDate* step_edate = [self fetchLatestSampleEndDate:step_qtype];
   NSDate* dist_edate = [self fetchLatestSampleEndDate:dist_qtype];
-  NSDate* time_begin = minDate(time_end, maxDate(hour_before_time_end, maxDate(step_edate, dist_edate)));
+  NSDate* time_begin =
+      minDate(time_end, maxDate(hour_before_time_end, maxDate([step_edate dateByAddingTimeInterval:1],
+                                                              [dist_edate dateByAddingTimeInterval:1])));
   NSLog(@"time_end: %@, hour_before_time_end:%@, step_edate: %@, dist_edate: %@, time_begin: %@", time_end,
         hour_before_time_end, step_edate, dist_edate, time_begin);
 
