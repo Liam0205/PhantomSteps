@@ -100,17 +100,29 @@ int fetch_int(NSString* key, int d) {
     return;
   }
   int input_steps = fetch_int(@"psp_once_input_steps", 2800);
+
+  // step data
   HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
   HKQuantity* step_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"count"]
                                                doubleValue:input_steps];
+
+  // distance data
   HKQuantityType* dist_qtype =
       [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDistanceWalkingRunning];
   HKQuantity* dist_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"m"]
                                                doubleValue:input_steps * 0.72];
+
+  // sample time
   NSDate* time_begin = [NSDate dateWithTimeIntervalSinceNow:-3610];
   NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
+
+  // sample device
   HKDevice* device = [HKDevice localDevice];
+
+  // metadata
   NSDictionary* metadata = @{};  // TODO(Liam): Fullfill metadata to do a better mock.
+
+  // build samples
   HKQuantitySample* step_sample = [HKQuantitySample quantitySampleWithType:step_qtype
                                                                   quantity:step_quantity
                                                                  startDate:time_begin
@@ -124,16 +136,44 @@ int fetch_int(NSString* key, int d) {
                                                                     device:device
                                                                   metadata:metadata];
 
+  // callback
+  // -- this callback runs in background (another thread), hence synchronization is required.
+  __block bool flag = false;
+  __block NSCondition* cond = [[NSCondition alloc] init];
+  // -- callback shared data
+  __block BOOL succ = NO;
+  __block NSError* err = nil;
+  void (^callback)(BOOL success, NSError* error) = ^(BOOL success, NSError* error) {
+    [cond lock];
+    succ = success;
+    err = nil;
+    flag = true;
+    [cond signal];
+    [cond unlock];
+    return;
+  };
+
+  // do save
   HKHealthStore* store = [[HKHealthStore alloc] init];
-  [store saveObjects:@[ step_sample, dist_sample ]
-      withCompletion:^(BOOL success, NSError* error) {
-        // TODO(Liam): write this callback.
-        return;
-      }];
-  [self alertTitle:@"Phantom Steps"
-           Message:[NSString stringWithFormat:@"执行完成，请打开「健康.app」检查是否成功写入。/ "
-                                              @"The execution is complete, please open the \"Health.app\" to "
-                                              @"check whether the writing is successful."]];
+  [store saveObjects:@[ step_sample, dist_sample ] withCompletion:callback];
+
+  // report
+  [cond lock];
+  while (!flag) {
+    [cond wait];
+  }
+  [cond unlock];
+  NSString* msg;
+  if (succ) {
+    msg = [NSString stringWithFormat:@"执行完成，请打开「健康.app」检查是否成功写入。/ "
+                                     @"The execution is complete, please open the \"Health.app\" to "
+                                     @"check whether the writing is successful."];
+  } else {
+    msg = [NSString stringWithFormat:@"执行失败：/ "
+                                     @"The execution is failed: %@",
+                                     err];
+  }
+  [self alertTitle:@"Phantom Steps" Message:msg];
 }
 
 - (void)openBlogZH {
@@ -166,8 +206,9 @@ int fetch_int(NSString* key, int d) {
   // callback, the result handler
   // -- resultsHandler runs in background (another thread), hence synchronization is required.
   __block bool flag = false;
-  __block NSDate* res = nil;
   __block NSCondition* cond = [[NSCondition alloc] init];
+  // -- callback shared data
+  __block NSDate* res = nil;
   void (^callback)(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) =
       ^(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) {
         [cond lock];
