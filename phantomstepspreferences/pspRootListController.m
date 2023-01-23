@@ -6,6 +6,9 @@
 #import <HealthKit/HKQuantity.h>
 #import <HealthKit/HKQuantitySample.h>
 #import <HealthKit/HKSampleQuery.h>
+#import <HealthKit/HKSource.h>
+#import <HealthKit/HKSourceQuery.h>
+#import <HealthKit/HKSourceRevision.h>
 #import <HealthKit/HKUnit.h>
 
 #define PreferencesFilePath                                      \
@@ -153,7 +156,7 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
   HKDevice* device = [HKDevice localDevice];
 
   // metadata
-  NSDictionary* metadata = @{};  // TODO(Liam): Fullfill metadata to do a better mock.
+  NSDictionary* metadata = @{};
 
   // build samples
   HKQuantitySample* step_sample = [HKQuantitySample quantitySampleWithType:step_qtype
@@ -223,7 +226,54 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
                            completionHandler:nil];
 }
 
-- (NSDate*)fetchLatestSampleEndDate:(HKSampleType*)qtype {
+- (HKSource*)fetchSource {
+  if (![HKHealthStore isHealthDataAvailable]) {
+    return nil;
+  }
+
+  HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
+  NSDate* curr = [NSDate date];
+  NSPredicate* last_one_day_pred =
+      [HKQuery predicateForSamplesWithStartDate:[curr dateByAddingTimeInterval:-86400]
+                                        endDate:curr
+                                        options:HKQueryOptionNone];
+  // callback, the result handler
+  // -- this callback runs in background (another thread), hence synchronization is required.
+  __block bool flag = false;
+  __block NSCondition* cond = [[NSCondition alloc] init];
+  // -- res
+  __block HKSource* target;
+  void (^callback)(HKSourceQuery* query, NSSet<HKSource*>* sources, NSError* error) =
+      ^(HKSourceQuery* query, NSSet<HKSource*>* sources, NSError* error) {
+        [cond lock];
+        for (HKSource* source in sources) {
+          NSString* bundleID = source.bundleIdentifier;
+          if ([bundleID hasPrefix:@"com.apple.health."]) {
+            target = source;
+            flag = true;
+            break;
+          }
+        }
+        [cond signal];
+        [cond unlock];
+        return;
+      };
+
+  // source query
+  HKSourceQuery* query = [[HKSourceQuery alloc] initWithSampleType:step_qtype
+                                                   samplePredicate:last_one_day_pred
+                                                 completionHandler:callback];
+  HKHealthStore* store = [[HKHealthStore alloc] init];
+  [store executeQuery:query];
+  [cond lock];
+  while (!flag) {
+    [cond wait];
+  }
+  [cond unlock];
+  return target;
+}
+
+- (HKSample*)fetchLatestSample:(HKSampleType*)type {
   if (![HKHealthStore isHealthDataAvailable]) {
     return nil;
   }
@@ -241,13 +291,12 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
   __block bool flag = false;
   __block NSCondition* cond = [[NSCondition alloc] init];
   // -- callback shared data
-  __block NSDate* res = nil;
+  __block HKSample* res = nil;
   void (^callback)(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) =
       ^(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) {
         [cond lock];
         if (results.count > 0) {
-          HKQuantitySample* sample = (HKQuantitySample*)[results firstObject];
-          res = sample.endDate;
+          res = (HKSample*)[results firstObject];
         } else {
           res = nil;
         }
@@ -256,7 +305,7 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
         [cond unlock];
       };
   // sample query
-  HKSampleQuery* sample_query = [[HKSampleQuery alloc] initWithSampleType:qtype
+  HKSampleQuery* sample_query = [[HKSampleQuery alloc] initWithSampleType:type
                                                                 predicate:last_one_day_pred
                                                                     limit:(NSInteger)1
                                                           sortDescriptors:@[ sort_by_time_desc ]
@@ -272,16 +321,68 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
   return res;
 }
 
+- (NSDate*)fetchLatestSampleEndDate:(HKSampleType*)type {
+  HKSample* sample = [self fetchLatestSample:type];
+  if (sample) {
+    return sample.endDate;
+  } else {
+    return nil;
+  }
+}
+
+- (HKSourceRevision*)fetchCorrectSourceRevision:(HKSampleType*)type {
+  if (![HKHealthStore isHealthDataAvailable]) {
+    return nil;
+  }
+  // predicate
+  NSDate* curr = [NSDate date];
+  NSPredicate* last_one_day_pred =
+      [HKQuery predicateForSamplesWithStartDate:[curr dateByAddingTimeInterval:-86400]
+                                        endDate:curr
+                                        options:HKQueryOptionNone];
+  // sort key
+  NSSortDescriptor* sort_by_time_desc = [NSSortDescriptor sortDescriptorWithKey:HKSampleSortIdentifierEndDate
+                                                                      ascending:false];
+  // callback, the result handler
+  // -- resultsHandler runs in background (another thread), hence synchronization is required.
+  __block bool flag = false;
+  __block NSCondition* cond = [[NSCondition alloc] init];
+  // -- callback shared data
+  __block HKSourceRevision* res = nil;
+  void (^callback)(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) =
+      ^(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) {
+        [cond lock];
+        for (HKSample* sample in results) {
+          if ([sample.sourceRevision.source.bundleIdentifier hasPrefix:@"com.apple.health."]) {
+            res = sample.sourceRevision;
+            break;
+          }
+        }
+        flag = true;
+        [cond signal];
+        [cond unlock];
+      };
+  // sample query
+  HKSampleQuery* sample_query = [[HKSampleQuery alloc] initWithSampleType:type
+                                                                predicate:last_one_day_pred
+                                                                    limit:(NSInteger)1000
+                                                          sortDescriptors:@[ sort_by_time_desc ]
+                                                           resultsHandler:callback];
+  HKHealthStore* store = [[HKHealthStore alloc] init];
+  [store executeQuery:sample_query];
+
+  [cond lock];
+  while (!flag) {
+    [cond wait];
+  }
+  [cond unlock];
+  return res;
+}
+
 - (void)do_debug {
-  load_prefs_to_dict();
-  HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
-  NSDate* step_edate = [self fetchLatestSampleEndDate:step_qtype];
-  HKQuantityType* dist_qtype =
-      [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDistanceWalkingRunning];
-  NSDate* dist_edate = [self fetchLatestSampleEndDate:dist_qtype];
-  NSLog(@"OUTSIDE RESULT_HANDLER, step: %@", step_edate);
-  NSLog(@"OUTSIDE RESULT_HANDLER, dist: %@", dist_edate);
-  NSDate* nildate = nil;
-  NSLog(@"OUTSIDE RESULT_HANDLER, max: %@", maxDate(step_edate, nildate));
+  HKSourceRevision* sourceRevision =
+      [self fetchCorrectSourceRevision:[HKQuantityType
+                                           quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount]];
+  NSLog(@"%@", sourceRevision);
 }
 @end
