@@ -44,6 +44,21 @@ int fetch_int(NSString* key, int d) {
   return _specifiers;
 }
 
+- (void)alertTitle:(NSString*)title Message:(NSString*)message {
+  UIAlertController* alert = [UIAlertController alertControllerWithTitle:title
+                                                                 message:message
+                                                          preferredStyle:UIAlertControllerStyleAlert];
+
+  UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK"
+                                                          style:UIAlertActionStyleDefault
+                                                        handler:^(UIAlertAction* action) {
+                                                          return;
+                                                        }];
+
+  [alert addAction:defaultAction];
+  [self presentViewController:alert animated:YES completion:nil];
+}
+
 // ----- dismiss keyboard -----
 // - dissmiss on scroll
 - (void)loadView {
@@ -72,72 +87,53 @@ int fetch_int(NSString* key, int d) {
     message = [NSString stringWithFormat:@"steps: %d, distance: %.2lf", steps, distance];
   }
 
-  UIAlertController* alert = [UIAlertController alertControllerWithTitle:title
-                                                                 message:message
-                                                          preferredStyle:UIAlertControllerStyleAlert];
-
-  UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK"
-                                                          style:UIAlertActionStyleDefault
-                                                        handler:^(UIAlertAction* action) {
-                                                          return;
-                                                        }];
-
-  [alert addAction:defaultAction];
-  [self presentViewController:alert animated:YES completion:nil];
+  [self alertTitle:title Message:message];
 }
 
 - (void)generateStepsATOnce {
   load_prefs_to_dict();
 
-  if ([HKHealthStore isHealthDataAvailable]) {
-    int input_steps = fetch_int(@"psp_once_input_steps", 2800);
-    HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
-    HKQuantity* step_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"count"]
-                                                 doubleValue:input_steps];
-    HKQuantityType* dist_qtype =
-        [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDistanceWalkingRunning];
-    HKQuantity* dist_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"m"]
-                                                 doubleValue:input_steps * 0.72];
-    NSDate* time_begin = [NSDate dateWithTimeIntervalSinceNow:-3610];
-    NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
-    HKDevice* device = [HKDevice localDevice];
-    NSDictionary* metadata = @{};  // TODO(Liam): Fullfill metadata to do a better mock.
-    HKQuantitySample* step_sample = [HKQuantitySample quantitySampleWithType:step_qtype
-                                                                    quantity:step_quantity
-                                                                   startDate:time_begin
-                                                                     endDate:time_end
-                                                                      device:device
-                                                                    metadata:metadata];
-    HKQuantitySample* dist_sample = [HKQuantitySample quantitySampleWithType:dist_qtype
-                                                                    quantity:dist_quantity
-                                                                   startDate:time_begin
-                                                                     endDate:time_end
-                                                                      device:device
-                                                                    metadata:metadata];
-
-    HKHealthStore* store = [[HKHealthStore alloc] init];
-    [store saveObjects:@[ step_sample, dist_sample ]
-        withCompletion:^(BOOL success, NSError* error) {
-          // TODO(Liam): write this callback.
-          return;
-        }];
+  if (![HKHealthStore isHealthDataAvailable]) {
+    [self alertTitle:@"Phantom Steps"
+             Message:[NSString stringWithFormat:@"执行失败，健康数据不可用。/ "
+                                                @"The execution is failed. Health data is not available."]];
+    return;
   }
-  UIAlertController* alert = [UIAlertController
-      alertControllerWithTitle:@"Phantom Steps"
-                       message:[NSString stringWithFormat:
-                                             @"执行完成，请打开「健康.app」检查是否成功写入。/ "
-                                             @"The execution is complete, please open the \"Health.app\" to "
-                                             @"check whether the writing is successful."]
-                preferredStyle:UIAlertControllerStyleAlert];
+  int input_steps = fetch_int(@"psp_once_input_steps", 2800);
+  HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
+  HKQuantity* step_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"count"]
+                                               doubleValue:input_steps];
+  HKQuantityType* dist_qtype =
+      [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDistanceWalkingRunning];
+  HKQuantity* dist_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"m"]
+                                               doubleValue:input_steps * 0.72];
+  NSDate* time_begin = [NSDate dateWithTimeIntervalSinceNow:-3610];
+  NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
+  HKDevice* device = [HKDevice localDevice];
+  NSDictionary* metadata = @{};  // TODO(Liam): Fullfill metadata to do a better mock.
+  HKQuantitySample* step_sample = [HKQuantitySample quantitySampleWithType:step_qtype
+                                                                  quantity:step_quantity
+                                                                 startDate:time_begin
+                                                                   endDate:time_end
+                                                                    device:device
+                                                                  metadata:metadata];
+  HKQuantitySample* dist_sample = [HKQuantitySample quantitySampleWithType:dist_qtype
+                                                                  quantity:dist_quantity
+                                                                 startDate:time_begin
+                                                                   endDate:time_end
+                                                                    device:device
+                                                                  metadata:metadata];
 
-  UIAlertAction* defaultAction = [UIAlertAction actionWithTitle:@"OK"
-                                                          style:UIAlertActionStyleDefault
-                                                        handler:^(UIAlertAction* action) {
-                                                          return;
-                                                        }];
-
-  [alert addAction:defaultAction];
-  [self presentViewController:alert animated:YES completion:nil];
+  HKHealthStore* store = [[HKHealthStore alloc] init];
+  [store saveObjects:@[ step_sample, dist_sample ]
+      withCompletion:^(BOOL success, NSError* error) {
+        // TODO(Liam): write this callback.
+        return;
+      }];
+  [self alertTitle:@"Phantom Steps"
+           Message:[NSString stringWithFormat:@"执行完成，请打开「健康.app」检查是否成功写入。/ "
+                                              @"The execution is complete, please open the \"Health.app\" to "
+                                              @"check whether the writing is successful."]];
 }
 
 - (void)openBlogZH {
