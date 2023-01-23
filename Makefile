@@ -1,6 +1,6 @@
 
 TARGET := iphone:clang:latest:14.0
-INSTALL_TARGET_PROCESSES = com.apple.Health
+INSTALL_TARGET_PROCESSES = com.apple.HealthKit
 
 
 include $(THEOS)/makefiles/common.mk

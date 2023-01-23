@@ -1,1 +1,5 @@
-{ Filter = { Bundles = ( "com.apple.Health" ); }; }
+{
+  Filter = {
+    Bundles = ( "com.apple.Health", "com.apple.HealthKit" );
+  };
+}
