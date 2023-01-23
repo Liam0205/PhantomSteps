@@ -25,8 +25,8 @@ void load_prefs_to_dict() {
 int fetch_int(NSString* key, int d) {
   if ([preferences objectForKey:key] == nil) {
     error_msg =
-        [NSString stringWithFormat:@"%s\nWARNING: Failed to find key[%s] in Preferences, default[%d] used.",
-                                   [error_msg UTF8String], [key UTF8String], d];
+        [NSString stringWithFormat:@"%@\nWARNING: Failed to find key[%@] in Preferences, default[%d] used.",
+                                   error_msg, key, d];
     return d;
   } else {
     return [[preferences valueForKey:key] intValue];
@@ -49,25 +49,6 @@ int fetch_int(NSString* key, int d) {
   [super loadView];
   ((UITableView*)[self table]).keyboardDismissMode = UIScrollViewKeyboardDismissModeOnDrag;
 }
-
-// - dismiss on tab outside text field
-// - (void)viewDidLoad {
-//   [super viewDidLoad];
-
-//   UITapGestureRecognizer *tap = [[UITapGestureRecognizer alloc]
-//   initWithTarget:self action:@selector(dismissKeyboard)];
-
-//   [self.view addGestureRecognizer:tap];
-// }
-
-// -(void)dismissKeyboard {
-//   [self.view endEditing:YES];
-// }
-
-// - dismiss on press return key
-// -(void)_returnKeyPressed:(id)arg1 {
-//   [self.view endEditing:YES];
-// }
 
 // ----- actions
 - (void)checkSettings {
