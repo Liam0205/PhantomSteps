@@ -1,8 +1,15 @@
 Package: page.liam.phantomsteps
-Name: PhantomSteps
-Version: 0.1.0
+Name: PhantomSteps (alpha)
+Version: 0.1.1
 Architecture: iphoneos-arm
 Description: Generate steps by your need!
+
+  # 0.1.1
+  * Calculate timerange automatically. This preventing phantom steps being averaged.
+  * Now, through the new callback function, we can know with certainty whether the data is written successfully.
+
+  # 0.1.0
+  The first public version.
 Maintainer: Liam Huang
 Author: Liam Huang
 Section: Tweaks
