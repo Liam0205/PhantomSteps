@@ -5,6 +5,7 @@
 #import <HealthKit/HKObjectType.h>
 #import <HealthKit/HKQuantity.h>
 #import <HealthKit/HKQuantitySample.h>
+#import <HealthKit/HKSampleQuery.h>
 #import <HealthKit/HKUnit.h>
 
 #define PreferencesFilePath                                      \
@@ -151,5 +152,34 @@ int fetch_int(NSString* key, int d) {
   [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://liam.page/en/"]
                                      options:URLOptions
                            completionHandler:nil];
+}
+
+- (void)do_debug {
+  load_prefs_to_dict();
+
+  if ([HKHealthStore isHealthDataAvailable]) {
+    HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
+    NSPredicate* today_pred =
+        [HKQuery predicateForSamplesWithStartDate:[[NSDate date] dateByAddingTimeInterval:-86400]
+                                          endDate:[NSDate date]
+                                          options:HKQueryOptionNone];
+    NSSortDescriptor* sort_by_time_desc =
+        [NSSortDescriptor sortDescriptorWithKey:HKSampleSortIdentifierStartDate ascending:false];
+    HKSampleQuery* sample_query = [[HKSampleQuery alloc]
+        initWithSampleType:step_qtype
+                 predicate:today_pred
+                     limit:(NSInteger)50
+           sortDescriptors:@[ sort_by_time_desc ]
+            resultsHandler:^(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) {
+              NSLog(@"INSIDE RESULT_HANDLER: has error[%d], result count[%lu]", error != NULL, results.count);
+              if (results.count > 0) {
+                // HKQuantitySample* sample = (HKQuantitySample*)[results firstObject];
+                NSLog(@"%@", results);
+                NSLog(@"%@", error);
+              }
+            }];
+    HKHealthStore* store = [[HKHealthStore alloc] init];
+    [store executeQuery:sample_query];
+  }
 }
 @end
