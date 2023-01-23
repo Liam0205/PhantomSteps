@@ -154,32 +154,63 @@ int fetch_int(NSString* key, int d) {
                            completionHandler:nil];
 }
 
+- (NSDate*)fetchLatestSampleEndDate:(HKSampleType*)qtype {
+  if (![HKHealthStore isHealthDataAvailable]) {
+    return nil;
+  }
+  // predicate
+  NSDate* curr = [NSDate date];
+  NSPredicate* last_one_day_pred =
+      [HKQuery predicateForSamplesWithStartDate:[curr dateByAddingTimeInterval:-86400]
+                                        endDate:curr
+                                        options:HKQueryOptionNone];
+  // sort key
+  NSSortDescriptor* sort_by_time_desc = [NSSortDescriptor sortDescriptorWithKey:HKSampleSortIdentifierEndDate
+                                                                      ascending:false];
+  // callback, the result handler
+  // -- resultsHandler runs in background (another thread), hence synchronization is required.
+  __block bool flag = false;
+  __block NSDate* res = nil;
+  __block NSCondition* cond = [[NSCondition alloc] init];
+  void (^callback)(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) =
+      ^(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) {
+        [cond lock];
+        if (results.count > 0) {
+          HKQuantitySample* sample = (HKQuantitySample*)[results firstObject];
+          res = sample.endDate;
+        } else {
+          res = nil;
+        }
+        flag = true;
+        [cond signal];
+        [cond unlock];
+      };
+  // sample query
+  HKSampleQuery* sample_query = [[HKSampleQuery alloc] initWithSampleType:qtype
+                                                                predicate:last_one_day_pred
+                                                                    limit:(NSInteger)1
+                                                          sortDescriptors:@[ sort_by_time_desc ]
+                                                           resultsHandler:callback];
+  HKHealthStore* store = [[HKHealthStore alloc] init];
+  [store executeQuery:sample_query];
+
+  [cond lock];
+  while (!flag) {
+    [cond wait];
+  }
+  [cond unlock];
+  return res;
+}
+
 - (void)do_debug {
   load_prefs_to_dict();
-
-  if ([HKHealthStore isHealthDataAvailable]) {
-    HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
-    NSPredicate* today_pred =
-        [HKQuery predicateForSamplesWithStartDate:[[NSDate date] dateByAddingTimeInterval:-86400]
-                                          endDate:[NSDate date]
-                                          options:HKQueryOptionNone];
-    NSSortDescriptor* sort_by_time_desc =
-        [NSSortDescriptor sortDescriptorWithKey:HKSampleSortIdentifierStartDate ascending:false];
-    HKSampleQuery* sample_query = [[HKSampleQuery alloc]
-        initWithSampleType:step_qtype
-                 predicate:today_pred
-                     limit:(NSInteger)50
-           sortDescriptors:@[ sort_by_time_desc ]
-            resultsHandler:^(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) {
-              NSLog(@"INSIDE RESULT_HANDLER: has error[%d], result count[%lu]", error != NULL, results.count);
-              if (results.count > 0) {
-                // HKQuantitySample* sample = (HKQuantitySample*)[results firstObject];
-                NSLog(@"%@", results);
-                NSLog(@"%@", error);
-              }
-            }];
-    HKHealthStore* store = [[HKHealthStore alloc] init];
-    [store executeQuery:sample_query];
-  }
+  HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
+  NSDate* step_edate = [self fetchLatestSampleEndDate:step_qtype];
+  HKQuantityType* dist_qtype =
+      [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDistanceWalkingRunning];
+  NSDate* dist_edate = [self fetchLatestSampleEndDate:dist_qtype];
+  NSLog(@"OUTSIDE RESULT_HANDLER, step: %@", step_edate);
+  NSLog(@"OUTSIDE RESULT_HANDLER, dist: %@", dist_edate);
+  NSLog(@"OUTSIDE RESULT_HANDLER, max: %@", MAX(step_edate, dist_edate));
 }
 @end
