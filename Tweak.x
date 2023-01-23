@@ -9,6 +9,8 @@
 #import <HealthKit/HKSource.h>
 #import <HealthKit/HKSourceRevision.h>
 
+// static HKSample* sample__;
+// static NSString* sourceBundleIdentifier__;
 // static HKSourceRevision* sourceRevision__;
 // static HKSource* source__;
 // static NSString* name__;
@@ -17,7 +19,7 @@
 // static NSOperatingSystemVersion operatingSystemVersion__;
 // static NSString* productType__;
 
-// HKSourceRevision* fetchCorrectSourceRevision(HKSampleType* type) {
+// HKSample* fetchSampleWithCorrectSourceRevision(HKSampleType* type) {
 //   if (![HKHealthStore isHealthDataAvailable]) {
 //     return nil;
 //   }
@@ -35,13 +37,13 @@
 //   __block bool flag = false;
 //   __block NSCondition* cond = [[NSCondition alloc] init];
 //   // -- callback shared data
-//   __block HKSourceRevision* res = nil;
+//   __block HKSample* res = nil;
 //   void (^callback)(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) =
 //       ^(HKSampleQuery* query, NSArray<__kindof HKSample*>* results, NSError* error) {
 //         [cond lock];
 //         for (HKSample* sample in results) {
 //           if ([sample.sourceRevision.source.bundleIdentifier hasPrefix:@"com.apple.health."]) {
-//             res = sample.sourceRevision;
+//             res = sample;
 //             break;
 //           }
 //         }
@@ -67,13 +69,8 @@
 // }
 
 // %hook HKObject
-// // -(void)_setSourceRevision:(id)arg1 {
-// //   self->_sourceRevision = fetchCorrectSourceRevision([HKQuantityType
-// //                                            quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount]);
-// // }
-
 // -(HKSourceRevision *)sourceRevision {
-//   NSLog(@"LiamHook: calling HKObject::sourceRevision.");
+//   // NSLog(@"LiamHook: calling HKObject::sourceRevision.");
 //   if (!sourceRevision__) {
 //     return %orig;
 //   } else {
@@ -82,7 +79,7 @@
 // }
 
 // -(HKSource *)source {
-//   NSLog(@"LiamHook: calling HKObject::source.");
+//   // NSLog(@"LiamHook: calling HKObject::source.");
 //   if (!source__) {
 //     return %orig;
 //   } else {
@@ -93,7 +90,7 @@
 
 // %hook HKSource
 // -(NSString *)name {
-//   NSLog(@"LiamHook: calling HKSource::name.");
+//   // NSLog(@"LiamHook: calling HKSource::name.");
 //   if (!name__) {
 //     return %orig;
 //   } else {
@@ -102,7 +99,7 @@
 // }
 
 // -(NSString *)bundleIdentifier {
-//   NSLog(@"LiamHook: calling HKSource::bundleIdentifier.");
+//   // NSLog(@"LiamHook: calling HKSource::bundleIdentifier.");
 //   if (!bundleIdentifier__) {
 //     return %orig;
 //   } else {
@@ -113,7 +110,7 @@
 
 // %hook HKSourceRevision
 // -(NSString *) version {
-//   NSLog(@"LiamHook: calling HKSourceRevision::version.");
+//   // NSLog(@"LiamHook: calling HKSourceRevision::version.");
 //   if (!version__) {
 //     return %orig;
 //   } else {
@@ -122,12 +119,12 @@
 // }
 
 // -(NSOperatingSystemVersion) operatingSystemVersion {
-//   NSLog(@"LiamHook: calling HKSourceRevision::operatingSystemVersion.");
+//   // NSLog(@"LiamHook: calling HKSourceRevision::operatingSystemVersion.");
 //   return operatingSystemVersion__;
 // }
 
 // -(NSString *) productType {
-//   NSLog(@"LiamHook: calling HKSourceRevision::productType.");
+//   // NSLog(@"LiamHook: calling HKSourceRevision::productType.");
 //   if (!productType__) {
 //     return %orig;
 //   } else {
@@ -136,13 +133,15 @@
 // }
 // %end
 
-%ctor {
-  // sourceRevision__ = fetchCorrectSourceRevision([HKQuantityType
-  //                                           quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount]);
-  // source__ = sourceRevision__.source;
-  // name__ = source__.name;
-  // bundleIdentifier__ = source__.bundleIdentifier;
-  // version__ = sourceRevision__.version;
-  // operatingSystemVersion__ = sourceRevision__.operatingSystemVersion;
-  // productType__ = sourceRevision__.productType;
-}
+// %ctor {
+//   sample__ = fetchSampleWithCorrectSourceRevision([HKQuantityType
+//                                             quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount]);
+//   sourceBundleIdentifier__ = sample__.sourceBundleIdentifier;
+//   sourceRevision__ = sample__.sourceRevision;
+//   source__ = sourceRevision__.source;
+//   name__ = source__.name;
+//   bundleIdentifier__ = source__.bundleIdentifier;
+//   version__ = sourceRevision__.version;
+//   operatingSystemVersion__ = sourceRevision__.operatingSystemVersion;
+//   productType__ = sourceRevision__.productType;
+// }
