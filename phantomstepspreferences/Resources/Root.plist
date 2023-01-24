@@ -31,11 +31,6 @@
         <key>label</key><string>生成 / Generate</string>
         <key>action</key><string>generateStepsATOnce</string>
       </dict>
-      <dict>
-        <key>cell</key><string>PSButtonCell</string>
-        <key>label</key><string>debug</string>
-        <key>action</key><string>do_debug</string>
-      </dict>
 
       <dict>
         <key>cell</key>
@@ -52,6 +47,19 @@
         <key>cell</key><string>PSButtonCell</string>
         <key>label</key><string>博客（英文） / Blog (English)</string>
         <key>action</key><string>openBlogEN</string>
+      </dict>
+
+      <dict>
+        <key>cell</key>
+        <string>PSGroupCell</string>
+        <key>label</key>
+        <string>Debug</string>
+        <key>footerText</key><string>Debug 是为开发者设计的功能，仅在 alpha/beta 版本中存在。普通用户无需使用；误触也没有影响而仅会打印若干日志。/ Debug is a feature designed for developers and only exists in alpha/beta versions. Ordinary users do not need to use it; accidental touches have no effect but only print a few logs.</string>
+      </dict>
+      <dict>
+        <key>cell</key><string>PSButtonCell</string>
+        <key>label</key><string>debug</string>
+        <key>action</key><string>do_debug</string>
       </dict>
     </array>
   </dict>
