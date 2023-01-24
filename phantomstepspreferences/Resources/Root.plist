@@ -35,7 +35,7 @@
       <dict>
         <key>cell</key><string>PSGroupCell</string>
         <key>label</key><string>持续行走 / Keep Walking</string>
-        <key>footerText</key><string>点击下面按钮，程序将会获取系统记录到的你上一次步行的结束时间，然后从那时起开始生成步数。系统将以每分钟 100 步/72 米的设定生成步数。/ Click the button below, and the program will get the end time of your last walk recorded by the system, and then start generating step counts from then on. The system will generate steps at a setting of 100 steps/72 meters per minute.</string>
+        <key>footerText</key><string>点击「生成」按钮，程序将会获取系统记录到的你上一次步行的结束时间，然后从那时起开始生成步数。系统将以每分钟 100 步/72 米的设定生成步数。/ Click the "generate" button, and the program will get the end time of your last walk recorded by the system, and then start generating step counts from then on. The system will generate steps at a setting of 100 steps/72 meters per minute.</string>
       </dict>
       <dict>
         <key>cell</key><string>PSButtonCell</string>
