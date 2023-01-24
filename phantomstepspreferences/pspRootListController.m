@@ -214,6 +214,105 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
   [self alertTitle:@"Phantom Steps" Message:msg];
 }
 
+- (void)keepWalking {
+  load_prefs_to_dict();
+
+  if (![HKHealthStore isHealthDataAvailable]) {
+    [self alertTitle:@"Phantom Steps"
+             Message:[NSString stringWithFormat:@"执行失败，健康数据不可用。/ "
+                                                @"The execution is failed. Health data is not available."]];
+    return;
+  }
+
+  // data type
+  HKQuantityType* step_qtype = [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierStepCount];
+  HKQuantityType* dist_qtype =
+      [HKQuantityType quantityTypeForIdentifier:HKQuantityTypeIdentifierDistanceWalkingRunning];
+
+  // time calc
+  NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
+  NSDate* latest_etime =
+      maxDate([self fetchLatestSampleEndDate:step_qtype], [self fetchLatestSampleEndDate:dist_qtype]);
+  NSDate* time_begin = minDate(time_end, latest_etime);
+  NSTimeInterval secondsBetween = [time_end timeIntervalSinceDate:time_begin];
+  int minBetween = (int)(secondsBetween / 60);
+  if (!(minBetween > 0)) {
+    [self alertTitle:@"Phantom Steps"
+             Message:[NSString stringWithFormat:
+                                   @"执行失败，距离上次步行结束不足 1 分钟。/ "
+                                   @"Execution failed, less than 1 minute since the end of the last walk."]];
+    return;
+  }
+
+  int steps = 100 * minBetween;
+  int distance = 72 * minBetween;
+
+  // quantity
+  HKQuantity* step_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"count"]
+                                               doubleValue:steps];
+  HKQuantity* dist_quantity = [HKQuantity quantityWithUnit:[HKUnit unitFromString:@"m"] doubleValue:distance];
+
+  // sample device
+  HKDevice* device = [HKDevice localDevice];
+
+  // metadata
+  NSDictionary* metadata = @{};
+
+  // build samples
+  HKQuantitySample* step_sample = [HKQuantitySample quantitySampleWithType:step_qtype
+                                                                  quantity:step_quantity
+                                                                 startDate:time_begin
+                                                                   endDate:time_end
+                                                                    device:device
+                                                                  metadata:metadata];
+  HKQuantitySample* dist_sample = [HKQuantitySample quantitySampleWithType:dist_qtype
+                                                                  quantity:dist_quantity
+                                                                 startDate:time_begin
+                                                                   endDate:time_end
+                                                                    device:device
+                                                                  metadata:metadata];
+
+  // callback
+  // -- this callback runs in background (another thread), hence synchronization is required.
+  __block bool flag = false;
+  __block NSCondition* cond = [[NSCondition alloc] init];
+  // -- callback shared data
+  __block BOOL succ = NO;
+  __block NSError* err = nil;
+  void (^callback)(BOOL success, NSError* error) = ^(BOOL success, NSError* error) {
+    [cond lock];
+    succ = success;
+    err = nil;
+    flag = true;
+    [cond signal];
+    [cond unlock];
+    return;
+  };
+
+  // do save
+  HKHealthStore* store = [[HKHealthStore alloc] init];
+  [store saveObjects:@[ step_sample, dist_sample ] withCompletion:callback];
+
+  // report
+  [cond lock];
+  while (!flag) {
+    [cond wait];
+  }
+  [cond unlock];
+  NSString* msg;
+  if (succ) {
+    msg = [NSString stringWithFormat:@"执行完成，写入 [%d 步/%d 米]。请打开「健康.app」检查是否成功写入。/ "
+                                     @"Execution is complete, write [%d steps/%d meters]. Please open "
+                                     @"\"Health.app\" to check whether it is written successfully.",
+                                     steps, distance, steps, distance];
+  } else {
+    msg = [NSString stringWithFormat:@"执行失败：/ "
+                                     @"The execution is failed: %@",
+                                     err];
+  }
+  [self alertTitle:@"Phantom Steps" Message:msg];
+}
+
 - (void)openBlogZH {
   NSDictionary* URLOptions = @{UIApplicationOpenURLOptionUniversalLinksOnly : @FALSE};
   [[UIApplication sharedApplication] openURL:[NSURL URLWithString:@"https://liam.page/"]
