@@ -31,11 +31,6 @@
         <key>label</key><string>生成 / Generate</string>
         <key>action</key><string>generateStepsATOnce</string>
       </dict>
-      <dict>
-        <key>cell</key><string>PSButtonCell</string>
-        <key>label</key><string>debug</string>
-        <key>action</key><string>do_debug</string>
-      </dict>
 
       <dict>
         <key>cell</key>
