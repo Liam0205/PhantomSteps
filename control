@@ -1,8 +1,10 @@
 Package: page.liam.phantomsteps
 Name: PhantomSteps (alpha)
-Version: 0.1.1
+Version: 0.2.0
 Architecture: iphoneos-arm
 Description: Generate steps by your need!
+  # 0.2.0
+  * New Feature: Automatically fetch the endDate of last sample, and generate steps since then.
 
   # 0.1.1
   * Calculate timerange automatically. This preventing phantom steps being averaged.
