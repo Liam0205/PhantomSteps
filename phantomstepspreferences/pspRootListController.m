@@ -233,7 +233,7 @@ NSDate* minDate(NSDate* lhs, NSDate* rhs) {
   NSDate* time_end = [NSDate dateWithTimeIntervalSinceNow:-10];
   NSDate* latest_etime =
       maxDate([self fetchLatestSampleEndDate:step_qtype], [self fetchLatestSampleEndDate:dist_qtype]);
-  NSDate* time_begin = minDate(time_end, latest_etime);
+  NSDate* time_begin = [minDate(time_end, latest_etime) dateByAddingTimeInterval:1];
   NSTimeInterval secondsBetween = [time_end timeIntervalSinceDate:time_begin];
   int minBetween = (int)(secondsBetween / 60);
   if (!(minBetween > 0)) {
